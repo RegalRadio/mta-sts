@@ -1,0 +1,20 @@
+name: Update _mta.sts DNS record
+
+on:
+  workflow_run:
+    workflows: ["Cloudflare Pages"]
+    branches: [main]
+    types: [completed]
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    steps:
+    - name: Update _mta-sts.regalradio.net
+      run: |
+        curl -X PUT "https://api.cloudflare.com/client/v4/zones/${{ secrets.CLOUDFLARE_ZONE }}/dns_records/${{ secrets.CLOUDFLARE_RECORD }}" \
+          -H "Authorization: Bearer ${{ secrets.CLOUDFLARE_KEY }}"
+          -H "Content-Type: application/json" \
+          --data '{"type":"TXT","name":"_mta-sts.regalradio.net","content":"v=STSv1;id=${{ env.GITHUB_RUN_ID }};","ttl":1}'
+
